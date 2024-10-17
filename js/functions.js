@@ -23,13 +23,13 @@ console.log(checkingPalindromes('кекс'));
 
 
 const findNumbers = function (string) {
-  let resultString = ''; // Используем let для изменяемой переменной
-  const str = string.toString(); // Вызываем toString как функцию
+  let resultString = '';
+  const str = string.toString();
 
   for (let i = 0; i < string.length; i++) {
     const symbol = parseInt(str[i], 10);
-    if (!symbol.isNan()) { // Исправляем isNan на isNaN
-      resultString += str[i]; // Исправляем конкатенацию строк
+    if (!symbol.isNaN()) {
+      resultString += str[i];
     }
   }
 
@@ -40,7 +40,7 @@ console.log(findNumbers('2023 год'));
 console.log(findNumbers('ECMAScript 2022'));
 console.log(findNumbers('1 кефир, 0.5 батона'));
 console.log(findNumbers('агент 007'));
-//console.log(findNumbers('а я томат'));
+console.log(findNumbers('а я томат'));
 console.log(findNumbers('2023'));
 console.log(findNumbers('-1'));
 console.log(findNumbers('1.5'));
