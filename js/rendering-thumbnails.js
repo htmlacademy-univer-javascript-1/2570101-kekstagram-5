@@ -3,7 +3,7 @@ const template = templateThumbnail.querySelector('.picture');
 const thumbnailsContainer = document.querySelector('.pictures');
 
 
-const renderThumbnails = (photos) => {
+const renderThumbnails = (photos, onThumbnailClick) => {
   const templatesFragment = document.createDocumentFragment();
   photos.forEach(({url, description, likes, comments}) => {
     const thumbnail = template.cloneNode(true);
@@ -11,6 +11,9 @@ const renderThumbnails = (photos) => {
     thumbnail.querySelector('.picture__img').alt = description;
     thumbnail.querySelector('.picture__likes').textContent = likes;
     thumbnail.querySelector('.picture__comments').textContent = comments.length;
+    thumbnail.comm = comments;
+
+    thumbnail.querySelector('.picture__img').addEventListener('click', () => onThumbnailClick({url, description, likes, comments}));
     templatesFragment.appendChild(thumbnail);
   });
   thumbnailsContainer.appendChild(templatesFragment);
@@ -18,12 +21,3 @@ const renderThumbnails = (photos) => {
 
 
 export { renderThumbnails };
-//На основе временных данных для разработки и шаблона #picture создайте DOM-элементы, соответствующие фотографиям, и заполните их данными:
-
-//Адрес изображения url подставьте как атрибут src изображения.
-//Описание изображения description подставьте в атрибут alt изображения.
-//Количество лайков likes выведите в блок .picture__likes.
-//Количество комментариев comments выведите в блок .picture__comments.
-//Отрисуйте сгенерированные DOM-элементы в блок .pictures. Для вставки элементов используйте DocumentFragment.
-
-//Подключите модуль в проект.

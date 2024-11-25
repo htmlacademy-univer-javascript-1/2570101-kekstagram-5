@@ -1,7 +1,7 @@
 import { createRandomId, getRandomArrayElement, getRandomInteger } from './util.js';
 
 const minCommentID = 1;
-const maxCommentID = 100;
+const maxCommentID = 6;
 
 const MESSAGES = [
   'Всё отлично!',
@@ -28,6 +28,7 @@ const NAMES = [
 const createStringAvatar = (id) => `img/avatar-${id}.svg`;
 
 const generateCommentId = createRandomId(minCommentID, maxCommentID);
+const generateIdAvatar = () => getRandomInteger(minCommentID, maxCommentID);
 
 const generateCommentText = () => {
   const numberOfPhrases = getRandomInteger(1,2);
@@ -40,10 +41,11 @@ const generateCommentText = () => {
 
 const createComment = () => {
   const id = generateCommentId();
+  const idAvatar = generateIdAvatar();
   const message = generateCommentText();
   return {
     id: id,
-    avatar: createStringAvatar(id),
+    avatar: createStringAvatar(idAvatar),
     message: message,
     name: getRandomArrayElement(NAMES),
   };
