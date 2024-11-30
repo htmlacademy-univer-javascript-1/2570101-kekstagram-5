@@ -9,9 +9,9 @@ const minCountComments = 0;
 const maxCountComments = 30;
 
 const DESCRIPTIONS = [
-  'Описание 1',
-  'Описание 2',
-  'Описание 3'
+  'Все хорошо',
+  'Доброе утро!',
+  'Люблю это фото'
 ];
 
 const generatePhotoId = createRandomId(minPhotoID, maxPhotoID);
