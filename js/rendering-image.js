@@ -1,4 +1,7 @@
 import { isEscapeKey } from './util.js';
+
+const commentsOnEachDownload = 5;
+
 const bodyElement = document.querySelector('body');
 const bigPhoto = document.querySelector('.big-picture');
 const exit = document.querySelector('.big-picture__cancel');
@@ -10,7 +13,6 @@ const bigPhotoDescription = bigPhoto.querySelector('.social__caption');
 const bigPhotoCommentCounter = bigPhoto.querySelector('.social__comment-count');
 const bigPhotoCommentsLoader = bigPhoto.querySelector('.comments-loader');
 
-const commentsOnEachDownload = 5;
 let currentComments = [];
 let displayedCommentsCount = 0;
 
@@ -27,7 +29,6 @@ const closeBigPhoto = () => {
   document.removeEventListener('keydown', onDocumentKeydown);
   bodyElement.classList.remove('modal-open');
 };
-
 
 const openBigPhoto = () => {
   bigPhoto.classList.remove('hidden');
@@ -108,11 +109,11 @@ const addThumbnailClickHandler = () => {
   });
 };
 
-const addExitClickerHandler = () => {
+const addExitClickListener = () => {
   exit.addEventListener('click', () => {
     closeBigPhoto();
   });
 };
 
 
-export { addThumbnailClickHandler, addExitClickerHandler, fillBigPhotoComments, fillBigPhotoData };
+export { addThumbnailClickHandler, addExitClickListener };
