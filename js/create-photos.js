@@ -1,6 +1,7 @@
 import { createRandomId, getRandomArrayElement, getRandomInteger } from './util.js';
 import { createComment } from './create-comments.js';
 
+const COUNT_PHOTOS = 25;
 const minPhotoID = 1;
 const maxPhotoID = 25;
 const minCountLikes = 15;
@@ -36,4 +37,6 @@ const createPhotosArray = (numberOfPhotos) => {
   return photos;
 };
 
-export { createPhotosArray };
+const descriptionsPhotos = createPhotosArray(COUNT_PHOTOS);
+
+export { descriptionsPhotos };
