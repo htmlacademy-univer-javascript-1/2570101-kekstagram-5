@@ -16,14 +16,6 @@ const bigPhotoCommentsLoader = bigPhoto.querySelector('.comments-loader');
 let currentComments = [];
 let displayedCommentsCount = 0;
 
-const onDocumentKeydown = (evt) => {
-  if (isEscapeKey(evt)) {
-    evt.preventDefault();
-    // eslint-disable-next-line no-use-before-define
-    closeBigPhoto();
-  }
-};
-
 const closeBigPhoto = () => {
   bigPhoto.classList.add('hidden');
   document.removeEventListener('keydown', onDocumentKeydown);
@@ -37,12 +29,21 @@ const openBigPhoto = () => {
   bigPhotoCommentsLoader.classList.remove('hidden');
 };
 
+function onDocumentKeydown (evt) {
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    closeBigPhoto();
+  }
+}
+
 const fillBigPhotoData = (data) => {
-  bigPhotoImg.src = data.querySelector('.picture__img').src;
-  bigPhotoImg.alt = data.querySelector('.picture__img').alt;
-  bigPhotoDescription.textContent = data.querySelector('.picture__img').alt;
-  bigPhotoSocial.textContent = data.querySelector('.picture__likes').textContent;
-  bigPhotoCountComments.textContent = data.querySelector('.picture__comments').textContent;
+  if (data) {
+    bigPhotoImg.src = data.url;
+    bigPhotoImg.alt = data.description;
+    bigPhotoDescription.textContent = data.description;
+    bigPhotoSocial.textContent = data.likes;
+    bigPhotoCountComments.textContent = data.comments.length;
+  }
 };
 
 const createCommentElement = (comment) => {
@@ -88,7 +89,7 @@ const updateComments = () => {
 };
 
 const fillBigPhotoComments = (data) => {
-  currentComments = data.comm;
+  currentComments = data.comments;
   displayedCommentsCount = 0;
   bigPhotoCommentsList.innerHTML = '';
   updateComments();
@@ -102,9 +103,15 @@ const addThumbnailClickHandler = () => {
   const thumbnails = document.querySelectorAll('.picture');
   thumbnails.forEach((thumbnail) => {
     thumbnail.addEventListener('click', () => {
+      const data = {
+        url: thumbnail.dataset.url,
+        likes: thumbnail.dataset.likes,
+        comments: JSON.parse(thumbnail.dataset.comments),
+        description: thumbnail.dataset.description
+      };
       openBigPhoto();
-      fillBigPhotoData(thumbnail);
-      fillBigPhotoComments(thumbnail);
+      fillBigPhotoData(data);
+      fillBigPhotoComments(data);
     });
   });
 };
@@ -115,5 +122,4 @@ const addExitClickListener = () => {
   });
 };
 
-
-export { addThumbnailClickHandler, addExitClickListener };
+export { addThumbnailClickHandler, addExitClickListener, closeBigPhoto };
