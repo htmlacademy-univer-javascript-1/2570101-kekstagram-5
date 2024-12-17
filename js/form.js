@@ -1,25 +1,22 @@
+import { resetEffects, createSlider, applyEffects, setupSliderUpdate } from './effects.js';
+import { resetScale, scaleControlClickHandler } from './scale.js';
+import { sendData } from './api.js';
+
 const MAX_HASHTAGS = 5;
 const MAX_DESCRIPTION_LENGTH = 140;
 const HASHTAG_REGEX = /^#[A-Za-z0-9а-яё]{1,19}$/i;
-const SCALE_STEP = 25;
-const MIN_SCALE = 25;
-const MAX_SCALE = 100;
-const DEFAULT_SCALE = 100;
+const ALERT_SHOW_TIME = 5000;
 
-const FORM_ERRORS = {
+const FormErrors = {
   COUNT_EXCEEDED: `Максимальное количество хэштегов — ${MAX_HASHTAGS}`,
   UNIQUE_HASHTAGS: 'Хэш-теги повторяются',
   INCORRECT_HASHTAG: 'Введен невалидный хэштег',
   LONG_DESCRIPTION: `Описание должно быть не длинее ${MAX_DESCRIPTION_LENGTH} символов`
 };
 
-const EFFECTS = {
-  none: { range: { min: 0, max: 1 }, start: 1, step: 0.1, hideSlider: true },
-  chrome: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'grayscale', hideSlider: false },
-  sepia: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'sepia', hideSlider: false },
-  marvin: { range: { min: 0, max: 100 }, start: 100, step: 1, unit: '%', filter: 'invert', hideSlider: false },
-  phobos: { range: { min: 0, max: 3 }, start: 3, step: 0.1, unit: 'px', filter: 'blur', hideSlider: false },
-  heat: { range: { min: 1, max: 3 }, start: 3, step: 0.1, unit: '', filter: 'brightness', hideSlider: false },
+const SubmitButtonText = {
+  IDLE: 'Отправить',
+  SENDING: 'Отправка...'
 };
 
 const form = document.querySelector('.img-upload__form');
@@ -29,100 +26,22 @@ const body = document.querySelector('body');
 const hashtagsField = form.querySelector('.text__hashtags');
 const descriptionField = form.querySelector('.text__description');
 const closeButton = form.querySelector('.img-upload__cancel');
-const sliderElement = form.querySelector('.effect-level__slider');
-const sliderContainerElement = form.querySelector('.img-upload__effect-level');
-const effectLevelValue = document.querySelector('.effect-level__value');
-const effectsButtons = document.querySelectorAll('.effects__radio');
 const scaleControlSmaller = document.querySelector('.scale__control--smaller');
 const scaleControlBigger = document.querySelector('.scale__control--bigger');
-const scaleControlValue = document.querySelector('.scale__control--value');
-const previewImage = document.querySelector('.img-upload__preview img');
-const originalEffectButton = document.querySelector('#effect-none');
+const errorMessageElement = document.querySelector('.error-message');
+const errorMessageText = errorMessageElement.querySelector('p');
+const successTemplate = document.querySelector('#success').content;
+const errorTemplate = document.querySelector('#error').content;
+const submitButton = form.querySelector('.img-upload__submit');
+
+let isErrorModalOpen = false;
 
 const pristine = new Pristine(form, {
   classTo: 'img-upload__field-wrapper',
   errorTextParent: 'img-upload__field-wrapper',
 });
 
-const updateScale = (value) => {
-  scaleControlValue.value = `${value}%`;
-  previewImage.style.transform = `scale(${value / 100})`;
-};
-
-const resetScale = () => {
-  updateScale(DEFAULT_SCALE);
-};
-
-const scaleControlSmallerClickHandler = () => {
-  let currentScale = parseInt(scaleControlValue.value, 10);
-  if (currentScale > MIN_SCALE) {
-    currentScale -= SCALE_STEP;
-    updateScale(currentScale);
-  }
-};
-
-const scaleControlBiggerClickHandler = () => {
-  let currentScale = parseInt(scaleControlValue.value, 10);
-  if (currentScale < MAX_SCALE) {
-    currentScale += SCALE_STEP;
-    updateScale(currentScale);
-  }
-};
-
-const showSlider = () => sliderContainerElement.classList.remove('hidden');
-const hideSlider = () => sliderContainerElement.classList.add('hidden');
-
-const createSlider = () => {
-  hideSlider();
-  if (!sliderElement.noUiSlider) {
-    noUiSlider.create(sliderElement, {
-      range: EFFECTS.none.range,
-      start: EFFECTS.none.start,
-      step: EFFECTS.none.step,
-      connect: 'lower',
-    });
-  }
-};
-
-const setEffect = (effect) => {
-  const effectParameters = EFFECTS[effect];
-
-  if (effectParameters.hideSlider) {
-    hideSlider();
-    previewImage.style.filter = '';
-    sliderElement.noUiSlider.set(EFFECTS.none.start);
-  } else {
-    showSlider();
-
-    sliderElement.noUiSlider.updateOptions({
-      range: effectParameters.range,
-      start: effectParameters.start,
-      step: effectParameters.step,
-    });
-    sliderElement.noUiSlider.set(effectParameters.start);
-    const filterValue = `${effectParameters.filter}(${effectParameters.start}${effectParameters.unit})`;
-    previewImage.style.filter = filterValue;
-  }
-  resetScale();
-  effectLevelValue.value = effectParameters.start;
-};
-
-const applyEffects = () => {
-  effectsButtons.forEach((button) => {
-    button.addEventListener('change', (evt) => {
-      const effect = evt.target.value;
-      setEffect(effect);
-    });
-  });
-};
-
-const resetEffects = () => {
-  originalEffectButton.checked = true;
-  previewImage.style.filter = '';
-  hideSlider();
-};
-
-const validateDescriptionLength = (value) => value.length <= 140;
+const validateDescriptionLength = (value) => value.length <= MAX_DESCRIPTION_LENGTH;
 
 const splitHashtags = (value) => value.trim().split(/\s+/).filter((tag) => Boolean(tag.length));
 
@@ -137,22 +56,14 @@ const validateUniqueHashtags = (value) => {
   return hashtags.length === new Set(hashtags).size;
 };
 
-const formPressESCHandler = (evt) => {
-  if (evt.key === 'Escape' && !isCursorInInputField()) {
-    evt.preventDefault();
-    // eslint-disable-next-line no-use-before-define
-    closeForm();
-  }
-};
-
 const closeForm = () => {
   form.reset();
   pristine.reset();
   fileField.value = '';
-  overlay.classList.add('hidden');
-  body.classList.remove('modal-open');
   resetEffects();
   resetScale();
+  overlay.classList.add('hidden');
+  body.classList.remove('modal-open');
   document.removeEventListener('keydown', formPressESCHandler);
 };
 
@@ -161,6 +72,13 @@ const showForm = () => {
   body.classList.add('modal-open');
   document.addEventListener('keydown', formPressESCHandler);
 };
+
+function formPressESCHandler (evt) {
+  if (evt.key === 'Escape' && !isCursorInInputField() && !isErrorModalOpen) {
+    evt.preventDefault();
+    closeForm();
+  }
+}
 
 const formFileIsSelectedHandler = (evt) => {
   if (evt.target.files.length) {
@@ -174,24 +92,114 @@ document.addEventListener('keydown', (evt) => {
   }
 });
 
-pristine.addValidator(descriptionField, validateDescriptionLength, FORM_ERRORS.LONG_DESCRIPTION);
-pristine.addValidator(hashtagsField, validateUniqueHashtags, FORM_ERRORS.UNIQUE_HASHTAGS);
-pristine.addValidator(hashtagsField, validateHashtags, FORM_ERRORS.INCORRECT_HASHTAG);
-pristine.addValidator(hashtagsField, validateHashtagCount, FORM_ERRORS.COUNT_EXCEEDED);
+pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LONG_DESCRIPTION);
+pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
+pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
+pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
 
 fileField.addEventListener('change', formFileIsSelectedHandler);
 closeButton.addEventListener('click', closeForm);
-scaleControlSmaller.addEventListener('click', scaleControlSmallerClickHandler);
-scaleControlBigger.addEventListener('click', scaleControlBiggerClickHandler);
+scaleControlSmaller.addEventListener('click', () => scaleControlClickHandler(false));
+scaleControlBigger.addEventListener('click', () => scaleControlClickHandler(true));
+
 createSlider();
-
-sliderElement.noUiSlider.on('update', (_, handle, unencoded) => {
-  const activeEffect = form.querySelector('.effects__radio:checked').value;
-  const effectParameters = EFFECTS[activeEffect];
-  const value = unencoded[handle];
-  effectLevelValue.value = value;
-  const filterValue = `${effectParameters.filter}(${value}${effectParameters.unit})`;
-  previewImage.style.filter = filterValue;
-});
-
+setupSliderUpdate();
 applyEffects();
+
+const showErrorMessage = (message) => {
+  errorMessageText.innerHTML = message;
+  errorMessageElement.classList.remove('hidden');
+  setTimeout(() => {
+    errorMessageElement.classList.add('hidden');
+  }, ALERT_SHOW_TIME);
+};
+
+const blockSubmitButton = () => {
+  submitButton.disabled = true;
+  submitButton.textContent = SubmitButtonText.SENDING;
+};
+
+const unblockSubmitButton = () => {
+  submitButton.disabled = false;
+  submitButton.textContent = SubmitButtonText.IDLE;
+};
+
+
+const showModal = (template, buttonSelector, message) => {
+  const modalElement = template.cloneNode(true);
+  const modalButton = modalElement.querySelector(buttonSelector);
+  body.appendChild(modalElement);
+
+  const closeModal = () => {
+    const modal = document.querySelector(message);
+    if (modal) {
+      body.removeChild(modal);
+    }
+    if (buttonSelector === '.error__button') {
+      isErrorModalOpen = false;
+    }
+  };
+
+  modalButton.addEventListener('click', closeModal);
+
+  const onDocumentClick = (evt) => {
+    if (evt.target !== document.querySelector(`${message}__title`) && evt.target !== document.querySelector(`${message}__inner`)) {
+      closeModal();
+      document.removeEventListener('click', onDocumentClick);
+    }
+  };
+
+  const onDocumentKeydown = (evt) => {
+    if (evt.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', onDocumentKeydown);
+    }
+  };
+
+  document.addEventListener('click', onDocumentClick);
+  document.addEventListener('keydown', onDocumentKeydown);
+
+  if (buttonSelector === '.error__button') {
+    isErrorModalOpen = true;
+  }
+};
+
+const showSuccessMessage = () => {
+  showModal(successTemplate, '.success__button', '.success');
+};
+
+const showErrorMessageModal = () => {
+  showModal(errorTemplate, '.error__button', '.error');
+};
+
+const setUserFormSubmit = () => {
+  form.addEventListener('submit', (evt) => {
+    evt.preventDefault();
+    const isValid = pristine.validate();
+
+    if (isValid) {
+      const formData = new FormData(form);
+      blockSubmitButton();
+      sendData(formData)
+        .then(() => {
+          resetEffects();
+          resetScale();
+          form.reset();
+          fileField.value = '';
+          closeForm();
+          showSuccessMessage();
+          unblockSubmitButton();
+        })
+        .catch(() => {
+          showErrorMessage('Не удалось отправить форму. Попробуйте ещё раз');
+          showErrorMessageModal();
+        })
+        .finally(unblockSubmitButton);
+    } else {
+      const errorText = pristine.getErrors().map((errorItem) => errorItem.errors.join('<br>')).join('<br>');
+      showErrorMessage(errorText);
+    }
+  });
+};
+
+export { setUserFormSubmit };
