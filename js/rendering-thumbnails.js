@@ -2,8 +2,10 @@ const templateThumbnail = document.querySelector('#picture').content;
 const template = templateThumbnail.querySelector('.picture');
 const thumbnailsContainer = document.querySelector('.pictures');
 
+const renderThumbnails = (photos, addThumbnailClickHandler) => {
+  const thumbnails = thumbnailsContainer.querySelectorAll('.picture');
+  thumbnails.forEach((thumbnail) => thumbnail.remove());
 
-const renderThumbnails = (photos, onThumbnailClick) => {
   const templatesFragment = document.createDocumentFragment();
   photos.forEach(({url, likes, comments, description}) => {
     const thumbnail = template.cloneNode(true);
@@ -16,12 +18,10 @@ const renderThumbnails = (photos, onThumbnailClick) => {
     thumbnail.dataset.comments = JSON.stringify(comments);
     thumbnail.dataset.description = description;
 
-    thumbnail.querySelector('.picture__img').addEventListener('click', () => onThumbnailClick({url, likes, comments, description}));
     templatesFragment.appendChild(thumbnail);
   });
   thumbnailsContainer.appendChild(templatesFragment);
+  addThumbnailClickHandler();
 };
 
 export { renderThumbnails };
-
-
