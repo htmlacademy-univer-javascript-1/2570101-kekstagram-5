@@ -2,27 +2,27 @@ import { createRandomId, getRandomArrayElement, getRandomInteger } from './util.
 import { createComment } from './create-comments.js';
 
 const COUNT_PHOTOS = 25;
-const minPhotoID = 1;
-const maxPhotoID = 25;
-const minCountLikes = 15;
-const maxCountLikes = 200;
-const minCountComments = 0;
-const maxCountComments = 30;
+const MIN_PHOTO_ID = 1;
+const MAX_PHOTO_ID = 25;
+const MIN_COUNT_LIKES = 15;
+const MAX_COUNT_LIKES = 200;
+const MIN_COUNT_COMMENTS = 0;
+const MAX_COUNT_COMMENTS = 30;
 
-const DESCRIPTIONS = [
+const descriptions = [
   'Все хорошо',
   'Доброе утро!',
   'Люблю это фото'
 ];
 
-const generatePhotoId = createRandomId(minPhotoID, maxPhotoID);
+const generatePhotoId = createRandomId(MIN_PHOTO_ID, MAX_PHOTO_ID);
 
 const createDescriptionPhoto = (id) => ({
   id: id,
   url: `photos/${id}.jpg`,
-  description: getRandomArrayElement(DESCRIPTIONS),
-  likes: getRandomInteger(minCountLikes, maxCountLikes),
-  comments: Array.from({ length: getRandomInteger(minCountComments, maxCountComments) }, () => createComment()),
+  description: getRandomArrayElement(descriptions),
+  likes: getRandomInteger(MIN_COUNT_LIKES, MAX_COUNT_LIKES),
+  comments: Array.from({ length: getRandomInteger(MIN_COUNT_COMMENTS, MAX_COUNT_COMMENTS) }, () => createComment()),
 });
 
 const createPhotosArray = (numberOfPhotos) => {

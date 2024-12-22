@@ -1,6 +1,6 @@
 import { getData } from './api.js';
 import { renderThumbnails } from './rendering-thumbnails.js';
-import { addThumbnailClickHandler, addExitClickListener } from './rendering-image.js';
+import { addThumbnailClickHandler } from './rendering-image.js';
 import { initFilters } from './filter.js';
 
 const errorMessageElement = document.querySelector('.error-message');
@@ -15,7 +15,6 @@ const fetchAndRenderData = () => {
       originalPhotos = descriptionsPhotos;
       randomPhotos = [...originalPhotos];
       renderThumbnails(descriptionsPhotos, addThumbnailClickHandler);
-      addExitClickListener();
       imgFiltersElement.classList.remove('img-filters--inactive');
       initFilters(originalPhotos, randomPhotos, renderThumbnails, addThumbnailClickHandler);
     })
