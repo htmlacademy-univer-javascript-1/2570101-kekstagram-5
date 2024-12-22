@@ -1,12 +1,12 @@
 import { resetScale } from './scale.js';
 
-const Effects = {
-  none: { range: { min: 0, max: 1 }, start: 1, step: 0.1, hideSlider: true },
-  chrome: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'grayscale', hideSlider: false },
-  sepia: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'sepia', hideSlider: false },
-  marvin: { range: { min: 0, max: 100 }, start: 100, step: 1, unit: '%', filter: 'invert', hideSlider: false },
-  phobos: { range: { min: 0, max: 3 }, start: 3, step: 0.1, unit: 'px', filter: 'blur', hideSlider: false },
-  heat: { range: { min: 1, max: 3 }, start: 3, step: 0.1, unit: '', filter: 'brightness', hideSlider: false },
+const Effect = {
+  NONE: { range: { min: 0, max: 1 }, start: 1, step: 0.1, hideSlider: true },
+  CHROME: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'grayscale', hideSlider: false },
+  SEPIA: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'sepia', hideSlider: false },
+  MARVIN: { range: { min: 0, max: 100 }, start: 100, step: 1, unit: '%', filter: 'invert', hideSlider: false },
+  PHOBOS: { range: { min: 0, max: 3 }, start: 3, step: 0.1, unit: 'px', filter: 'blur', hideSlider: false },
+  HEAT: { range: { min: 1, max: 3 }, start: 3, step: 0.1, unit: '', filter: 'brightness', hideSlider: false },
 };
 
 const form = document.querySelector('.img-upload__form');
@@ -25,22 +25,22 @@ const createSlider = () => {
   toggleSliderVisibility(false);
   if (!sliderElement.noUiSlider) {
     noUiSlider.create(sliderElement, {
-      range: Effects.none.range,
-      start: Effects.none.start,
-      step: Effects.none.step,
+      range: Effect.NONE.range,
+      start: Effect.NONE.start,
+      step: Effect.NONE.step,
       connect: 'lower',
     });
   }
 };
 
 const setEffect = (effect) => {
-  const effectParameters = Effects[effect];
+  const effectParameters = Effect[effect.toUpperCase()];
 
-  if (effectParameters.hideSlider) {
+  if (effectParameters && effectParameters.hideSlider) {
     toggleSliderVisibility(false);
     previewImage.style.filter = '';
-    sliderElement.noUiSlider.set(Effects.none.start);
-  } else {
+    sliderElement.noUiSlider.set(Effect.NONE.start);
+  } else if (effectParameters) {
     toggleSliderVisibility(true);
 
     sliderElement.noUiSlider.updateOptions({
@@ -53,19 +53,27 @@ const setEffect = (effect) => {
     previewImage.style.filter = filterValue;
   }
   resetScale();
-  effectLevelValue.value = effectParameters.start;
+  effectLevelValue.value = effectParameters ? effectParameters.start : '';
 };
-
 
 const applyEffects = () => {
   effectsButtons.forEach((button) => {
-    button.addEventListener('change', (evt) => {
+    const changeHandler = (evt) => {
       const effect = evt.target.value;
       setEffect(effect);
-    });
+    };
+    button.changeHandler = changeHandler;
+    button.addEventListener('change', changeHandler);
   });
 };
 
+const removeEffectsChangeHandlers = () => {
+  effectsButtons.forEach((button) => {
+    if (button.changeHandler) {
+      button.removeEventListener('change', button.changeHandler);
+    }
+  });
+};
 
 const resetEffects = () => {
   originalEffectButton.checked = true;
@@ -74,14 +82,25 @@ const resetEffects = () => {
 };
 
 const setupSliderUpdate = () => {
-  sliderElement.noUiSlider.on('update', (_, handle, unencoded) => {
+  const updateHandler = (_, handle, unencoded) => {
     const activeEffect = form.querySelector('.effects__radio:checked').value;
-    const effectParameters = Effects[activeEffect];
+    const effectParameters = Effect[activeEffect.toUpperCase()];
     const value = unencoded[handle];
     effectLevelValue.value = value;
-    const filterValue = `${effectParameters.filter}(${value}${effectParameters.unit})`;
-    previewImage.style.filter = filterValue;
-  });
+
+    if (effectParameters && effectParameters.filter) {
+      const filterValue = `${effectParameters.filter}(${value}${effectParameters.unit})`;
+      previewImage.style.filter = filterValue;
+    }
+  };
+  sliderElement.noUiSlider.on('update', updateHandler);
+  sliderElement.updateHandler = updateHandler;
 };
 
-export { createSlider, applyEffects, resetEffects, setupSliderUpdate };
+const removeSliderUpdateHandler = () => {
+  if (sliderElement.updateHandler) {
+    sliderElement.noUiSlider.off('update', sliderElement.updateHandler);
+  }
+};
+
+export { createSlider, applyEffects, removeEffectsChangeHandlers, removeSliderUpdateHandler, resetEffects, setupSliderUpdate };

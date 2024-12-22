@@ -13,7 +13,6 @@ const updateScale = (value) => {
 
 const resetScale = () => updateScale(DEFAULT_SCALE);
 
-
 const scaleControlClickHandler = (isIncrease) => {
   let currentScale = parseInt(scaleControlValue.value, 10);
   currentScale = isIncrease ? Math.min(currentScale + SCALE_STEP, MAX_SCALE) : Math.max(currentScale - SCALE_STEP, MIN_SCALE);

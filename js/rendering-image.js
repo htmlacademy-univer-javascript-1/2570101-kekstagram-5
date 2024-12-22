@@ -1,6 +1,7 @@
 import { isEscapeKey } from './util.js';
 
-const commentsOnEachDownload = 5;
+const COMMENTS_ON_EACH_DOWNLOAD = 5;
+const AVATAR_SIZE = 35;
 
 const bodyElement = document.querySelector('body');
 const bigPhoto = document.querySelector('.big-picture');
@@ -16,36 +17,6 @@ const bigPhotoCommentsLoader = bigPhoto.querySelector('.comments-loader');
 let currentComments = [];
 let displayedCommentsCount = 0;
 
-const closeBigPhoto = () => {
-  bigPhoto.classList.add('hidden');
-  document.removeEventListener('keydown', onDocumentKeydown);
-  bodyElement.classList.remove('modal-open');
-};
-
-const openBigPhoto = () => {
-  bigPhoto.classList.remove('hidden');
-  document.addEventListener('keydown', onDocumentKeydown);
-  bodyElement.classList.add('modal-open');
-  bigPhotoCommentsLoader.classList.remove('hidden');
-};
-
-function onDocumentKeydown (evt) {
-  if (isEscapeKey(evt)) {
-    evt.preventDefault();
-    closeBigPhoto();
-  }
-}
-
-const fillBigPhotoData = (data) => {
-  if (data) {
-    bigPhotoImg.src = data.url;
-    bigPhotoImg.alt = data.description;
-    bigPhotoDescription.textContent = data.description;
-    bigPhotoSocial.textContent = data.likes;
-    bigPhotoCountComments.textContent = data.comments.length;
-  }
-};
-
 const createCommentElement = (comment) => {
   const commentElement = document.createElement('li');
   commentElement.classList.add('social__comment');
@@ -54,8 +25,8 @@ const createCommentElement = (comment) => {
   imgElement.classList.add('social__picture');
   imgElement.src = comment.avatar;
   imgElement.alt = comment.name;
-  imgElement.width = 35;
-  imgElement.height = 35;
+  imgElement.width = AVATAR_SIZE;
+  imgElement.height = AVATAR_SIZE;
 
   const textElement = document.createElement('p');
   textElement.classList.add('social__text');
@@ -82,10 +53,60 @@ const checkLoaderVisibility = () => {
 };
 
 const updateComments = () => {
-  const commentsToShow = currentComments.slice(displayedCommentsCount, displayedCommentsCount + commentsOnEachDownload);
+  const commentsToShow = currentComments.slice(displayedCommentsCount, displayedCommentsCount + COMMENTS_ON_EACH_DOWNLOAD);
   renderComments(commentsToShow);
   bigPhotoCommentCounter.textContent = `${displayedCommentsCount} из ${currentComments.length} комментариев`;
   checkLoaderVisibility();
+};
+
+const onCommentsLoaderClick = () => {
+  updateComments();
+};
+
+const addExitClickListener = () => {
+  exit.addEventListener('click', onExitClick);
+};
+
+const removeExitClickListener = () => {
+  exit.removeEventListener('click', onExitClick);
+};
+
+const closeBigPhoto = () => {
+  bigPhoto.classList.add('hidden');
+  document.removeEventListener('keydown', onDocumentKeydown);
+  bodyElement.classList.remove('modal-open');
+  bigPhotoCommentsLoader.removeEventListener('click', onCommentsLoaderClick);
+  removeExitClickListener();
+};
+
+const openBigPhoto = () => {
+  bigPhoto.classList.remove('hidden');
+  document.addEventListener('keydown', onDocumentKeydown);
+  bodyElement.classList.add('modal-open');
+  bigPhotoCommentsLoader.classList.remove('hidden');
+  bigPhotoCommentsLoader.addEventListener('click', onCommentsLoaderClick);
+  addExitClickListener();
+};
+
+function onExitClick() {
+  closeBigPhoto();
+}
+
+function onDocumentKeydown (evt) {
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    closeBigPhoto();
+  }
+}
+
+const fillBigPhotoData = (data) => {
+  if (data) {
+    bigPhotoImg.src = data.url;
+    bigPhotoImg.alt = data.description;
+    bigPhotoDescription.textContent = data.description;
+    bigPhotoSocial.textContent = data.likes;
+    bigPhotoCountComments.textContent = data.comments.length;
+  }
 };
 
 const fillBigPhotoComments = (data) => {
@@ -94,10 +115,6 @@ const fillBigPhotoComments = (data) => {
   bigPhotoCommentsList.innerHTML = '';
   updateComments();
 };
-
-bigPhotoCommentsLoader.addEventListener('click', () => {
-  updateComments();
-});
 
 const addThumbnailClickHandler = () => {
   const thumbnails = document.querySelectorAll('.picture');
@@ -116,10 +133,4 @@ const addThumbnailClickHandler = () => {
   });
 };
 
-const addExitClickListener = () => {
-  exit.addEventListener('click', () => {
-    closeBigPhoto();
-  });
-};
-
-export { addThumbnailClickHandler, addExitClickListener, closeBigPhoto };
+export { addThumbnailClickHandler, addExitClickListener, closeBigPhoto, removeExitClickListener };
