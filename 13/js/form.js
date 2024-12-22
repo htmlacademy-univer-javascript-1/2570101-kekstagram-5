@@ -35,6 +35,7 @@ const successTemplate = document.querySelector('#success').content;
 const errorTemplate = document.querySelector('#error').content;
 const submitButton = form.querySelector('.img-upload__submit');
 const imagePreview = document.querySelector('.img-upload__preview img');
+const effectsPreview = form.querySelectorAll('.effects__preview');
 
 let isErrorModalOpen = false;
 
@@ -112,12 +113,11 @@ function formPressESCHandler (evt) {
 const formFileIsSelectedHandler = (evt) => {
   const file = evt.target.files[0];
   if (file && FILE_TYPES.includes(file.name.split('.').pop().toLowerCase())) {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      imagePreview.src = reader.result;
-      showForm();
+    imagePreview.src = URL.createObjectURL(file);
+    effectsPreview.forEach((preview) => {
+      preview.style.backgroundImage = `url('${imagePreview.src}')`;
     });
-    reader.readAsDataURL(file);
+    showForm();
   }
 };
 
