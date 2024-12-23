@@ -124,7 +124,6 @@ const unblockSubmitButton = () => {
   submitButton.textContent = SubmitButtonText.IDLE;
 };
 
-
 const showModal = (template, buttonSelector, message) => {
   const modalElement = template.cloneNode(true);
   const modalButton = modalElement.querySelector(buttonSelector);
