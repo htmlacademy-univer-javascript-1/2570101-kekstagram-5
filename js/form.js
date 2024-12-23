@@ -5,7 +5,7 @@ import { sendData } from './api.js';
 const MAX_HASHTAGS = 5;
 const MAX_DESCRIPTION_LENGTH = 140;
 const HASHTAG_REGEX = /^#[A-Za-z0-9а-яё]{1,19}$/i;
-const ALERT_SHOW_TIME = 5000;
+const ALERT_SHOW_TIME = 3000;
 const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
 const FormError = {
@@ -29,8 +29,6 @@ const descriptionField = form.querySelector('.text__description');
 const closeButton = form.querySelector('.img-upload__cancel');
 const scaleControlSmaller = document.querySelector('.scale__control--smaller');
 const scaleControlBigger = document.querySelector('.scale__control--bigger');
-const errorMessageElement = document.querySelector('.error-message');
-const errorMessageText = errorMessageElement.querySelector('p');
 const successTemplate = document.querySelector('#success').content;
 const errorTemplate = document.querySelector('#error').content;
 const submitButton = form.querySelector('.img-upload__submit');
@@ -95,15 +93,26 @@ const showForm = () => {
   scaleControlBigger.addEventListener('click', scaleControlBiggerHandler);
 };
 
-const showErrorMessage = (message) => {
-  errorMessageText.innerHTML = message;
-  errorMessageElement.classList.remove('hidden');
-  setTimeout(() => {
-    errorMessageElement.classList.add('hidden');
-  }, ALERT_SHOW_TIME);
+const showErrorMessage = (message, isTemporary = false) => {
+  let errorMessageElement = document.querySelector('.data-error');
+
+  if (errorMessageElement) {
+    errorMessageElement.remove();
+  }
+
+  errorMessageElement = document.createElement('div');
+  errorMessageElement.classList.add('data-error');
+  errorMessageElement.innerHTML = `<p>${message}</p>`;
+  document.body.appendChild(errorMessageElement);
+
+  if (isTemporary) {
+    setTimeout(() => {
+      errorMessageElement.remove();
+    }, ALERT_SHOW_TIME);
+  }
 };
 
-function formPressESCHandler (evt) {
+function formPressESCHandler(evt) {
   if (evt.key === 'Escape' && !isCursorInInputField() && !isErrorModalOpen) {
     evt.preventDefault();
     closeForm();
@@ -209,16 +218,16 @@ const setUserFormSubmit = () => {
           showSuccessMessage();
           unblockSubmitButton();
         })
-        .catch(() => {
-          showErrorMessage('Не удалось отправить форму. Попробуйте ещё раз');
+        .catch((error) => {
+          showErrorMessage(error.message, true);
           showErrorMessageModal();
         })
         .finally(unblockSubmitButton);
     } else {
       const errorText = pristine.getErrors().map((errorItem) => errorItem.errors.join('<br>')).join('<br>');
-      showErrorMessage(errorText);
+      showErrorMessage(errorText, true);
     }
   });
 };
 
-export { setUserFormSubmit };
+export { setUserFormSubmit, showErrorMessage };

@@ -3,7 +3,6 @@ import { renderThumbnails } from './rendering-thumbnails.js';
 import { addThumbnailClickHandler } from './rendering-image.js';
 import { initFilters } from './filter.js';
 
-const errorMessageElement = document.querySelector('.error-message');
 const imgFiltersElement = document.querySelector('.img-filters');
 
 let originalPhotos = [];
@@ -19,7 +18,12 @@ const fetchAndRenderData = () => {
       initFilters(originalPhotos, randomPhotos, renderThumbnails, addThumbnailClickHandler);
     })
     .catch(() => {
-      errorMessageElement.classList.remove('hidden');
+      const errorMessageElement = document.querySelector('.data-error');
+      if (!errorMessageElement) {
+        const newErrorMessageElement = document.createElement('div');
+        newErrorMessageElement.classList.add('data-error');
+        document.body.appendChild(newErrorMessageElement);
+      }
     });
 };
 
