@@ -1,3 +1,5 @@
+import { showErrorMessage } from './form.js';
+
 const BASE_URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
 const Route = {
   GET_DATA: '/data',
@@ -21,6 +23,9 @@ const load = (route, errorText = null, method = Method.GET, body = null) =>
       return response.json();
     })
     .catch((err) => {
+      if (errorText) {
+        showErrorMessage(errorText);
+      }
       throw new Error(errorText ?? err.message);
     });
 

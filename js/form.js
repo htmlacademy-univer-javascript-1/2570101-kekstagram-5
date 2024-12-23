@@ -1,13 +1,14 @@
-import { resetEffects, createSlider, applyEffects, setupSliderUpdate } from './effects.js';
+import { resetEffects, createSlider, applyEffects, setupSliderUpdate, removeEffectsChangeHandlers, removeSliderUpdateHandler } from './effects.js';
 import { resetScale, scaleControlClickHandler } from './scale.js';
 import { sendData } from './api.js';
 
 const MAX_HASHTAGS = 5;
 const MAX_DESCRIPTION_LENGTH = 140;
 const HASHTAG_REGEX = /^#[A-Za-z0-9а-яё]{1,19}$/i;
-const ALERT_SHOW_TIME = 5000;
+const ALERT_SHOW_TIME = 3000;
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
-const FormErrors = {
+const FormError = {
   COUNT_EXCEEDED: `Максимальное количество хэштегов — ${MAX_HASHTAGS}`,
   UNIQUE_HASHTAGS: 'Хэш-теги повторяются',
   INCORRECT_HASHTAG: 'Введен невалидный хэштег',
@@ -28,11 +29,11 @@ const descriptionField = form.querySelector('.text__description');
 const closeButton = form.querySelector('.img-upload__cancel');
 const scaleControlSmaller = document.querySelector('.scale__control--smaller');
 const scaleControlBigger = document.querySelector('.scale__control--bigger');
-const errorMessageElement = document.querySelector('.error-message');
-const errorMessageText = errorMessageElement.querySelector('p');
 const successTemplate = document.querySelector('#success').content;
 const errorTemplate = document.querySelector('#error').content;
 const submitButton = form.querySelector('.img-upload__submit');
+const imagePreview = document.querySelector('.img-upload__preview img');
+const effectsPreview = form.querySelectorAll('.effects__preview');
 
 let isErrorModalOpen = false;
 
@@ -56,6 +57,14 @@ const validateUniqueHashtags = (value) => {
   return hashtags.length === new Set(hashtags).size;
 };
 
+const scaleControlSmallerHandler = () => {
+  scaleControlClickHandler(false);
+};
+
+const scaleControlBiggerHandler = () => {
+  scaleControlClickHandler(true);
+};
+
 const closeForm = () => {
   form.reset();
   pristine.reset();
@@ -65,15 +74,45 @@ const closeForm = () => {
   overlay.classList.add('hidden');
   body.classList.remove('modal-open');
   document.removeEventListener('keydown', formPressESCHandler);
+  removeEffectsChangeHandlers();
+  removeSliderUpdateHandler();
+  closeButton.removeEventListener('click', closeForm);
+  scaleControlSmaller.removeEventListener('click', scaleControlSmallerHandler);
+  scaleControlBigger.removeEventListener('click', scaleControlBiggerHandler);
 };
 
 const showForm = () => {
   overlay.classList.remove('hidden');
   body.classList.add('modal-open');
   document.addEventListener('keydown', formPressESCHandler);
+  createSlider();
+  setupSliderUpdate();
+  applyEffects();
+  closeButton.addEventListener('click', closeForm);
+  scaleControlSmaller.addEventListener('click', scaleControlSmallerHandler);
+  scaleControlBigger.addEventListener('click', scaleControlBiggerHandler);
 };
 
-function formPressESCHandler (evt) {
+const showErrorMessage = (message, isTemporary = false) => {
+  let errorMessageElement = document.querySelector('.data-error');
+
+  if (errorMessageElement) {
+    errorMessageElement.remove();
+  }
+
+  errorMessageElement = document.createElement('div');
+  errorMessageElement.classList.add('data-error');
+  errorMessageElement.innerHTML = `<p>${message}</p>`;
+  document.body.appendChild(errorMessageElement);
+
+  if (isTemporary) {
+    setTimeout(() => {
+      errorMessageElement.remove();
+    }, ALERT_SHOW_TIME);
+  }
+};
+
+function formPressESCHandler(evt) {
   if (evt.key === 'Escape' && !isCursorInInputField() && !isErrorModalOpen) {
     evt.preventDefault();
     closeForm();
@@ -81,7 +120,12 @@ function formPressESCHandler (evt) {
 }
 
 const formFileIsSelectedHandler = (evt) => {
-  if (evt.target.files.length) {
+  const file = evt.target.files[0];
+  if (file && FILE_TYPES.includes(file.name.split('.').pop().toLowerCase())) {
+    imagePreview.src = URL.createObjectURL(file);
+    effectsPreview.forEach((preview) => {
+      preview.style.backgroundImage = `url('${imagePreview.src}')`;
+    });
     showForm();
   }
 };
@@ -92,27 +136,12 @@ document.addEventListener('keydown', (evt) => {
   }
 });
 
-pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LONG_DESCRIPTION);
-pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
-pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
-pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
+pristine.addValidator(descriptionField, validateDescriptionLength, FormError.LONG_DESCRIPTION);
+pristine.addValidator(hashtagsField, validateUniqueHashtags, FormError.UNIQUE_HASHTAGS);
+pristine.addValidator(hashtagsField, validateHashtags, FormError.INCORRECT_HASHTAG);
+pristine.addValidator(hashtagsField, validateHashtagCount, FormError.COUNT_EXCEEDED);
 
 fileField.addEventListener('change', formFileIsSelectedHandler);
-closeButton.addEventListener('click', closeForm);
-scaleControlSmaller.addEventListener('click', () => scaleControlClickHandler(false));
-scaleControlBigger.addEventListener('click', () => scaleControlClickHandler(true));
-
-createSlider();
-setupSliderUpdate();
-applyEffects();
-
-const showErrorMessage = (message) => {
-  errorMessageText.innerHTML = message;
-  errorMessageElement.classList.remove('hidden');
-  setTimeout(() => {
-    errorMessageElement.classList.add('hidden');
-  }, ALERT_SHOW_TIME);
-};
 
 const blockSubmitButton = () => {
   submitButton.disabled = true;
@@ -189,16 +218,16 @@ const setUserFormSubmit = () => {
           showSuccessMessage();
           unblockSubmitButton();
         })
-        .catch(() => {
-          showErrorMessage('Не удалось отправить форму. Попробуйте ещё раз');
+        .catch((error) => {
+          showErrorMessage(error.message, true);
           showErrorMessageModal();
         })
         .finally(unblockSubmitButton);
     } else {
       const errorText = pristine.getErrors().map((errorItem) => errorItem.errors.join('<br>')).join('<br>');
-      showErrorMessage(errorText);
+      showErrorMessage(errorText, true);
     }
   });
 };
 
-export { setUserFormSubmit };
+export { setUserFormSubmit, showErrorMessage };

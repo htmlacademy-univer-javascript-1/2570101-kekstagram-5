@@ -1409,7 +1409,7 @@ main {
   display: none;
 }
 
-.error-message {
+.data-error {
   position: fixed;
   top: 20px;
   left: 50%;
@@ -1422,7 +1422,7 @@ main {
   z-index: 1000;
 }
 
-.error-message.hidden {
+.data-error.hidden {
   display: none;
 }
 
