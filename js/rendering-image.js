@@ -55,7 +55,23 @@ const checkLoaderVisibility = () => {
 const updateComments = () => {
   const commentsToShow = currentComments.slice(displayedCommentsCount, displayedCommentsCount + COMMENTS_ON_EACH_DOWNLOAD);
   renderComments(commentsToShow);
-  bigPhotoCommentCounter.textContent = `${displayedCommentsCount} из ${currentComments.length} комментариев`;
+
+  bigPhotoCommentCounter.innerHTML = '';
+
+  const shownCountSpan = document.createElement('span');
+  shownCountSpan.classList.add('social__comment-shown-count');
+  shownCountSpan.textContent = displayedCommentsCount;
+  bigPhotoCommentCounter.appendChild(shownCountSpan);
+
+  bigPhotoCommentCounter.appendChild(document.createTextNode(' из '));
+
+  const totalCountSpan = document.createElement('span');
+  totalCountSpan.classList.add('social__comment-total-count');
+  totalCountSpan.textContent = currentComments.length;
+  bigPhotoCommentCounter.appendChild(totalCountSpan);
+
+  bigPhotoCommentCounter.appendChild(document.createTextNode(' комментариев'));
+
   checkLoaderVisibility();
 };
 

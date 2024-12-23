@@ -1,5 +1,3 @@
-import { resetScale } from './scale.js';
-
 const Effect = {
   NONE: { range: { min: 0, max: 1 }, start: 1, step: 0.1, hideSlider: true },
   CHROME: { range: { min: 0, max: 1 }, start: 1, step: 0.1, unit: '', filter: 'grayscale', hideSlider: false },
@@ -52,7 +50,6 @@ const setEffect = (effect) => {
     const filterValue = `${effectParameters.filter}(${effectParameters.start}${effectParameters.unit})`;
     previewImage.style.filter = filterValue;
   }
-  resetScale();
   effectLevelValue.value = effectParameters ? effectParameters.start : '';
 };
 
